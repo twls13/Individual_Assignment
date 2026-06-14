@@ -6,7 +6,6 @@ def main():
     
     st.title("💰 완벽 통합 정산기")
     
-    # 상단 메뉴 선택
     mode = st.radio(
         "원하는 계산 방식을 선택하세요:", 
         ["1/N 정산 (통합)", "술값 따로 정산 (항목별)"], 
@@ -19,7 +18,6 @@ def main():
     else:
         run_alcohol_settlement()
 
-# --- 모드 1: 1/N 정산 (통합) ---
 def run_n_bbang():
     st.subheader("🤝 흩어진 결제내역 완벽 N빵 정산기")
     st.markdown("각자 결제한 총액을 1/N으로 나누어 깔끔하게 정산합니다.")
@@ -75,7 +73,6 @@ def run_n_bbang():
         else:
             st.success("모든 정산이 완벽히 맞아떨어져 송금할 금액이 없습니다!")
 
-# --- 모드 2: 술값 따로 정산 (UX 완벽 개선) ---
 def run_alcohol_settlement():
     st.subheader("🍻 술값 따로 정산기")
     st.markdown("전체 결제액에서 술값만 따로 빼서, 마신 사람들에게만 분배합니다.")
@@ -90,7 +87,6 @@ def run_alcohol_settlement():
     with c1: 
         alcohol_price = st.number_input("술값 총액 (원)", value=0, step=1000)
     with c2: 
-        # 기본적으로 앞에 2명 정도만 선택되어 있도록 세팅
         default_drinkers = name_list[:2] if len(name_list) >= 2 else name_list
         drinkers = st.multiselect("누가 술을 마셨나요?", name_list, default=default_drinkers)
     
@@ -109,7 +105,6 @@ def run_alcohol_settlement():
             st.error("입력된 총 결제 금액이 없습니다.")
             return
             
-        # 전체 금액에서 술값을 뺀 나머지를 공통 밥값으로 계산
         common_total = total_paid - alcohol_price
         
         if common_total < 0:
@@ -118,19 +113,16 @@ def run_alcohol_settlement():
             
         burden = {name: 0.0 for name in name_list}
         
-        # 1. 밥값 1/N 계산
         common_share = common_total / len(name_list) if len(name_list) > 0 else 0
         for name in name_list:
             burden[name] += common_share
             
-        # 2. 술값 배분 계산 (마신 사람만)
         alcohol_share = alcohol_price / len(drinkers) if len(drinkers) > 0 else 0
         if alcohol_price > 0 and drinkers:
             for p in drinkers:
                 if p in burden:
                     burden[p] += alcohol_share
                     
-        # 상세 내역 표 생성 (과제 어필용 데이터 프레임)
         st.subheader("📊 개인별 상세 정산 내역")
         detail_data = []
         for name in name_list:
@@ -144,7 +136,6 @@ def run_alcohol_settlement():
             })
         st.dataframe(pd.DataFrame(detail_data), use_container_width=True)
                     
-        # 3. 송금액 매칭 로직
         bal = {name: paid_dict[name] - burden[name] for name in name_list}
         rec = sorted([{"이름": k, "잔액": v} for k, v in bal.items() if v > 0], key=lambda x: x["잔액"], reverse=True)
         sen = sorted([{"이름": k, "잔액": v} for k, v in bal.items() if v < 0], key=lambda x: x["잔액"])
